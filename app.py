@@ -6,7 +6,7 @@ import joblib
 # ----------------------------
 # Load the model
 # ----------------------------
-model_path = Path("models") / "credit_scoring_model.pkl"
+model_path = Path("models") / "kenya_sme_credit_model.pkl"
 model = joblib.load(model_path)
 
 # ----------------------------
