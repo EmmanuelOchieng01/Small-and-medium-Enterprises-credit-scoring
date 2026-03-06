@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
-import pickle  # or joblib if you saved your model that way
+import pickle
 from pathlib import Path
 
 # ----------------------------
 # Load model
 # ----------------------------
-model_path = Path("models") / "your_model.pkl"  # Replace with actual saved model
+model_path = Path("models") / "kenya_sme_credit_model.pkl"
 with open(model_path, "rb") as f:
     model = pickle.load(f)
 
@@ -17,27 +17,26 @@ st.set_page_config(
     page_title="Kenya SME Credit Scoring",
     page_icon="💼",
     layout="centered",
-    initial_sidebar_state="expanded",
 )
 
+st.title("💼 Kenya SME Credit Scoring Dashboard")
+st.write("Predict credit risk for small and medium enterprises in Kenya.")
+
 # ----------------------------
-# Sidebar inputs
+# Sidebar for inputs
 # ----------------------------
 st.sidebar.header("Enter SME Information")
 
-# Example features – replace/add based on your model
 revenue = st.sidebar.number_input("Annual Revenue (KES)", min_value=0, value=100000)
 employees = st.sidebar.number_input("Number of Employees", min_value=1, value=5)
 loan_amount = st.sidebar.number_input("Requested Loan Amount (KES)", min_value=0, value=50000)
-years_operating = st.sidebar.slider("Years in Operation", min_value=0, max_value=50, value=3)
-
-# You can add more features here according to your model
+years_operating = st.sidebar.slider("Years in Operation", 0, 50, 3)
 
 # ----------------------------
 # Predict button
 # ----------------------------
 if st.sidebar.button("Predict Credit Score"):
-    # Create DataFrame for the model
+    # Prepare input for the model
     input_data = pd.DataFrame({
         "revenue": [revenue],
         "employees": [employees],
@@ -45,19 +44,18 @@ if st.sidebar.button("Predict Credit Score"):
         "years_operating": [years_operating],
     })
 
-    # Predict using the loaded model
+    # Make prediction
     score = model.predict(input_data)[0]
 
     # ----------------------------
-    # Display results
+    # Display result
     # ----------------------------
-    st.subheader("Credit Scoring Result")
+    st.subheader("Credit Score Result")
     st.markdown(
         f"<h2 style='color: #1f77b4;'>Predicted Credit Score: {score:.2f}</h2>",
         unsafe_allow_html=True
     )
 
-    # Optional color coding
     if score >= 80:
         st.success("Excellent credit risk ✅")
     elif score >= 50:
@@ -69,4 +67,4 @@ if st.sidebar.button("Predict Credit Score"):
 # Footer
 # ----------------------------
 st.markdown("---")
-st.markdown("**Kenya SME Credit Scoring Dashboard**  💼")
+st.markdown("**Kenya SME Credit Scoring System** 💼")
