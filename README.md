@@ -21,21 +21,28 @@ This project solves that problem by building a machine learning–based credit s
 - **Model**: Random Forest
 - **AUC Score**: 1.0000
 - **Accuracy**: 0.9900
-
 ## Quick Start
-1. Install requirements: `pip install -r requirements.txt`
-2. Run the model: `python kenya_credit_scoring.py`
-3. Access the dashboard: `python app.py`
 
-## Project Structure
+1. Install dependencies
+
+pip install -r requirements.txt
+
+2. Run the credit scoring model
+
+python kenya_sme_credit.py
+
+3. Run the dashboard
+
+streamlit run app.py
+
 kenya-sme-credit/
-├── models/ # Saved models
-├── data/ # Dataset files
-├── reports/ # Performance reports
-├── notebooks/ # Jupyter notebooks
-├── app.py # Flask API
-├── dashboard.py # Streamlit dashboard
-└── requirements.txt # Dependencies
+├── models/            # Saved ML models
+├── data/              # Dataset files
+├── reports/           # Model performance reports
+├── notebooks/         # Jupyter notebooks for experiments
+├── kenya_sme_credit.py # Main ML model script
+├── app.py             # Streamlit dashboard
+└── requirements.txt   # Project dependencies
 
 
 ## Key Features
