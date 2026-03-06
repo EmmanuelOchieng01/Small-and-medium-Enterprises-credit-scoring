@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 import joblib  # for loading sklearn models
+model = joblib.load(model_path)
 
 # ----------------------------
 # Load model
