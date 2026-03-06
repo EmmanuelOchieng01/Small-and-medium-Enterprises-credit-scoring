@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
-import pickle
 from pathlib import Path
+import joblib  # for loading sklearn models
 
 # ----------------------------
 # Load model
 # ----------------------------
-model_path = Path("models") / "kenya_sme_credit_model.pkl"
-with open(model_path, "rb") as f:
-    model = pickle.load(f)
+model_path = Path("models") / "credit_scoring_model.pkl"
+model = joblib.load(model_path)
 
 # ----------------------------
-# Page configuration
+# Page config
 # ----------------------------
 st.set_page_config(
     page_title="Kenya SME Credit Scoring",
@@ -23,7 +22,7 @@ st.title("💼 Kenya SME Credit Scoring Dashboard")
 st.write("Predict credit risk for small and medium enterprises in Kenya.")
 
 # ----------------------------
-# Sidebar for inputs
+# Sidebar inputs
 # ----------------------------
 st.sidebar.header("Enter SME Information")
 
@@ -36,7 +35,6 @@ years_operating = st.sidebar.slider("Years in Operation", 0, 50, 3)
 # Predict button
 # ----------------------------
 if st.sidebar.button("Predict Credit Score"):
-    # Prepare input for the model
     input_data = pd.DataFrame({
         "revenue": [revenue],
         "employees": [employees],
@@ -44,12 +42,10 @@ if st.sidebar.button("Predict Credit Score"):
         "years_operating": [years_operating],
     })
 
-    # Make prediction
+    # Prediction
     score = model.predict(input_data)[0]
 
-    # ----------------------------
-    # Display result
-    # ----------------------------
+    # Display results
     st.subheader("Credit Score Result")
     st.markdown(
         f"<h2 style='color: #1f77b4;'>Predicted Credit Score: {score:.2f}</h2>",
@@ -63,8 +59,6 @@ if st.sidebar.button("Predict Credit Score"):
     else:
         st.error("High credit risk ❌")
 
-# ----------------------------
 # Footer
-# ----------------------------
 st.markdown("---")
 st.markdown("**Kenya SME Credit Scoring System** 💼")
