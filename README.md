@@ -40,10 +40,13 @@ python kenya_sme_credit.py
 4. Run the dashboard
 
 streamlit run app.py
-after running the dashboard open: http://localhost:8501
+
+after running the dashboard open:
+
+http://localhost:8501
 
 
-
+##structure 
 kenya-sme-credit/
 ├── models/            # Saved ML models
 ├── data/              # Dataset files
