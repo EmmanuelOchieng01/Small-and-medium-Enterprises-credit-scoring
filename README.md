@@ -24,7 +24,7 @@ This project solves that problem by building a machine learning–based credit s
 
 ## Quick Start
 1. Install requirements: `pip install -r requirements.txt`
-2. Run the model: `python credit_scoring.py`
+2. Run the model: `python kenya_credit_scoring.py`
 3. Access the dashboard: `python app.py`
 
 ## Project Structure
