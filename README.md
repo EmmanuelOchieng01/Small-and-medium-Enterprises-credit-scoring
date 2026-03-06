@@ -24,6 +24,9 @@ This project solves that problem by building a machine learning–based credit s
 1. Clone the repository
 
 git clone https://github.com/EmmanuelOchieng01/Small-and-medium-Enterprises-credit-scoring.git
+
+then; 
+
 cd Small-and-medium-Enterprises-credit-scoring
 
 2. Install dependencies
