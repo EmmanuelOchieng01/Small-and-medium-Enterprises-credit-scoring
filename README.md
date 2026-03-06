@@ -21,19 +21,25 @@ This project solves that problem by building a machine learning–based credit s
 - **Model**: Random Forest
 - **AUC Score**: 1.0000
 - **Accuracy**: 0.9900
-## Quick Start
+1. Clone the repository
 
-1. Install dependencies
+git clone https://github.com/EmmanuelOchieng01/Small-and-medium-Enterprises-credit-scoring.git
+cd Small-and-medium-Enterprises-credit-scoring
+
+2. Install dependencies
 
 pip install -r requirements.txt
 
-2. Run the credit scoring model
+3. Run the credit scoring model
 
 python kenya_sme_credit.py
 
-3. Run the dashboard
+4. Run the dashboard
 
 streamlit run app.py
+after running the dashboard open: http://localhost:8501
+
+
 
 kenya-sme-credit/
 ├── models/            # Saved ML models
