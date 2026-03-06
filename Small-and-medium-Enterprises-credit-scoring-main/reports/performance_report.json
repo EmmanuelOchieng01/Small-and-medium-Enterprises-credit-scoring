@@ -1,0 +1,90 @@
+{
+  "project": "Kenya SME Credit Scoring",
+  "timestamp": "2025-10-21 15:34:51.818906",
+  "best_model": "Random Forest",
+  "model_performance": {
+    "Random Forest": {
+      "auc": 1.0,
+      "accuracy": 0.99,
+      "cv_auc_mean": 0.9936947695247194,
+      "cv_auc_std": 0.007174442513989321
+    },
+    "Gradient Boosting": {
+      "auc": 1.0,
+      "accuracy": 1.0,
+      "cv_auc_mean": 1.0,
+      "cv_auc_std": 0.0
+    },
+    "Logistic Regression": {
+      "auc": 0.9974747474747474,
+      "accuracy": 0.995,
+      "cv_auc_mean": 0.9930379746835442,
+      "cv_auc_std": 0.00580072872779218
+    }
+  },
+  "dataset_info": {
+    "total_samples": 1000,
+    "training_samples": 800,
+    "test_samples": 200,
+    "default_rate": 0.011,
+    "features_used": [
+      "business_age",
+      "employees",
+      "monthly_revenue",
+      "monthly_expenses",
+      "profit_margin",
+      "avg_account_balance",
+      "transaction_frequency",
+      "loan_repayment_history",
+      "existing_loans",
+      "collateral_value",
+      "sector_encoded",
+      "location_encoded",
+      "revenue_per_employee",
+      "balance_to_revenue_ratio",
+      "expense_ratio"
+    ]
+  },
+  "top_features": [
+    {
+      "feature": "business_age",
+      "combined_score": 0.09436189394904358
+    },
+    {
+      "feature": "revenue_per_employee",
+      "combined_score": 0.04562257999292416
+    },
+    {
+      "feature": "loan_repayment_history",
+      "combined_score": 0.03754146610774871
+    },
+    {
+      "feature": "avg_account_balance",
+      "combined_score": 0.03715754712016307
+    },
+    {
+      "feature": "balance_to_revenue_ratio",
+      "combined_score": 0.035012099212282995
+    },
+    {
+      "feature": "transaction_frequency",
+      "combined_score": 0.034656973812805816
+    },
+    {
+      "feature": "collateral_value",
+      "combined_score": 0.03323947325218877
+    },
+    {
+      "feature": "monthly_expenses",
+      "combined_score": 0.033147302812815686
+    },
+    {
+      "feature": "existing_loans",
+      "combined_score": 0.030065776853972118
+    },
+    {
+      "feature": "expense_ratio",
+      "combined_score": 0.02796918016883262
+    }
+  ]
+}

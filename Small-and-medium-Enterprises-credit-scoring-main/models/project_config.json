@@ -1,0 +1,29 @@
+{
+  "project_name": "Kenya SME Credit Scoring",
+  "model_version": "1.0",
+  "best_model": "Random Forest",
+  "features_used": [
+    "business_age",
+    "employees",
+    "monthly_revenue",
+    "monthly_expenses",
+    "profit_margin",
+    "avg_account_balance",
+    "transaction_frequency",
+    "loan_repayment_history",
+    "existing_loans",
+    "collateral_value",
+    "sector_encoded",
+    "location_encoded",
+    "revenue_per_employee",
+    "balance_to_revenue_ratio",
+    "expense_ratio"
+  ],
+  "data_description": {
+    "total_samples": 1000,
+    "training_samples": 800,
+    "test_samples": 200,
+    "default_rate": "1.10%"
+  },
+  "created_date": "2025-10-21"
+}
