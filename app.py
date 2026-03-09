@@ -249,7 +249,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    page = st.radio("", ["📋  Credit Assessment", "📊  Model Performance"],
+    page = st.radio("Navigation", ["📋  Credit Assessment", "📊  Model Performance"],
                     label_visibility="collapsed")
     st.markdown("<hr style='border-color:#1E2D40;margin:0.5rem 0 1rem 0;'>", unsafe_allow_html=True)
 
