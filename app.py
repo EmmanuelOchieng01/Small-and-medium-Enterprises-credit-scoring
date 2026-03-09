@@ -265,10 +265,31 @@ def format_kes(v):
     return f"KES {v:.0f}"
 
 
+
 # ============================================================
-# HEADER
+# PAGE NAVIGATION
 # ============================================================
-st.markdown("""
+with st.sidebar:
+    st.markdown("""
+    <div style="padding:1.5rem 0.5rem 1rem 0.5rem; border-bottom:1px solid #1E2D40; margin-bottom:1rem;">
+        <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#F1F5F9;">🏦 CreditIQ</div>
+        <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#334155; margin-top:0.2rem;">SME UNDERWRITING ENGINE</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    page = st.radio("", ["Credit Assessment", "Model Performance"],
+                    label_visibility="collapsed")
+    st.markdown("<hr style='border-color:#1E2D40; margin:0.5rem 0 1rem 0;'>", unsafe_allow_html=True)
+
+# ============================================================
+# SHARED HEADER
+# ============================================================
+page_title    = "Credit Risk Assessment" if page == "Credit Assessment" else "Model Performance Report"
+page_subtitle = ("ML-powered underwriting for Kenya's small &amp; medium enterprise sector"
+                 if page == "Credit Assessment"
+                 else "RandomForestClassifier · 2,000 samples · 5-fold cross-validation")
+
+st.markdown(f"""
 <div style="padding:2.5rem 0 1.5rem 0; border-bottom:1px solid #1E2D40; margin-bottom:2rem;
             display:flex; align-items:flex-end; justify-content:space-between;">
     <div>
@@ -277,10 +298,10 @@ st.markdown("""
             ◈ CreditIQ Kenya &nbsp;·&nbsp; SME Risk Intelligence Platform
         </div>
         <div style="font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:#F1F5F9; line-height:1.1;">
-            Credit Risk Assessment
+            {page_title}
         </div>
         <div style="font-family:'DM Sans',sans-serif; font-size:0.9rem; color:#475569; margin-top:0.4rem;">
-            ML-powered underwriting for Kenya's small &amp; medium enterprise sector
+            {page_subtitle}
         </div>
     </div>
     <div style="text-align:right; font-family:'DM Mono',monospace; font-size:0.7rem; color:#334155;">
@@ -292,18 +313,128 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ============================================================
+# MODEL PERFORMANCE PAGE
+# ============================================================
+if page == "Model Performance":
+    metrics_path = Path("models") / "model_metrics.json"
+    if not metrics_path.exists():
+        st.warning("⚠️ Metrics not found. Run `python setup.py` first.")
+        st.stop()
+
+    with open(metrics_path) as f:
+        m = json.load(f)
+
+    k1,k2,k3,k4,k5,k6 = st.columns(6)
+    with k1: st.metric("Accuracy",          f"{m['accuracy']:.1%}")
+    with k2: st.metric("ROC AUC",           f"{m['roc_auc']:.4f}")
+    with k3: st.metric("CV F1 Score",       f"{m['cv_f1_mean']:.4f}")
+    with k4: st.metric("Default Recall",    f"{m['default_recall']:.1%}")
+    with k5: st.metric("Default Precision", f"{m['default_precision']:.1%}")
+    with k6: st.metric("Avg Precision",     f"{m['avg_precision']:.4f}")
+
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<div class="section-label">ROC Curve</div>', unsafe_allow_html=True)
+        roc_df = pd.DataFrame({"FPR": m["fpr"], "TPR": m["tpr"]}).set_index("FPR")
+        st.line_chart(roc_df, color="#00D4AA")
+        st.caption(f"AUC = {m['roc_auc']:.4f} — closer to 1.0 is better. Random = 0.5")
+    with col2:
+        st.markdown('<div class="section-label">Precision-Recall Curve</div>', unsafe_allow_html=True)
+        pr_df = pd.DataFrame({"Recall": m["recall_curve"], "Precision": m["precision_curve"]}).set_index("Recall")
+        st.line_chart(pr_df, color="#0EA5E9")
+        st.caption(f"Average Precision = {m['avg_precision']:.4f}")
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    col3, col4 = st.columns(2)
+
+    with col3:
+        st.markdown('<div class="section-label">Confusion Matrix</div>', unsafe_allow_html=True)
+        cm = m["confusion_matrix"]
+        ca, cb = st.columns(2)
+        with ca:
+            st.markdown(f"""
+            <div style="background:rgba(0,212,170,0.12);border:1px solid rgba(0,212,170,0.3);
+                        border-radius:10px;padding:1.2rem;text-align:center;margin-bottom:0.5rem;">
+                <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#00D4AA;">{cm[0][0]}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#00D4AA;">TRUE NEGATIVE</div>
+            </div>
+            <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);
+                        border-radius:10px;padding:1.2rem;text-align:center;">
+                <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#F97316;">{cm[1][0]}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#F97316;">FALSE NEGATIVE</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with cb:
+            st.markdown(f"""
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+                        border-radius:10px;padding:1.2rem;text-align:center;margin-bottom:0.5rem;">
+                <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#EF4444;">{cm[0][1]}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#EF4444;">FALSE POSITIVE</div>
+            </div>
+            <div style="background:rgba(0,212,170,0.12);border:1px solid rgba(0,212,170,0.3);
+                        border-radius:10px;padding:1.2rem;text-align:center;">
+                <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#00D4AA;">{cm[1][1]}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#00D4AA;">TRUE POSITIVE</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown('<div class="section-label">Feature Importance</div>', unsafe_allow_html=True)
+        colors = ["#00D4AA","#0EA5E9","#A855F7","#F97316","#EAB308",
+                  "#EF4444","#22C55E","#64748B","#EC4899","#14B8A6","#8B5CF6","#F59E0B"]
+        for i, (feat, imp) in enumerate(m["feature_importance"].items()):
+            pct = imp * 100
+            c   = colors[i % len(colors)]
+            st.markdown(f"""
+            <div style="margin-bottom:0.5rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;">
+                    <span style="font-family:'DM Sans',sans-serif;font-size:0.78rem;color:#94A3B8;">
+                        {feat.replace('_',' ').title()}</span>
+                    <span style="font-family:'DM Mono',monospace;font-size:0.72rem;color:{c};">{pct:.1f}%</span>
+                </div>
+                <div style="background:#1E2D40;border-radius:3px;height:5px;overflow:hidden;">
+                    <div style="background:{c};width:{min(pct*5,100):.0f}%;height:100%;border-radius:3px;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    perf1, perf2 = st.columns(2)
+    with perf1:
+        st.markdown('<div class="section-label">No Default Class</div>', unsafe_allow_html=True)
+        for label, val in [
+            ("Precision", f"{m['no_default_precision']:.1%}"),
+            ("Recall",    f"{m['no_default_recall']:.1%}"),
+            ("F1 Score",  f"{m['no_default_f1']:.1%}"),
+        ]:
+            st.markdown(f"""<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #0F1923;">
+                <span style="font-family:'DM Sans',sans-serif;font-size:0.82rem;color:#475569;">{label}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:0.82rem;color:#94A3B8;">{val}</span></div>
+            """, unsafe_allow_html=True)
+    with perf2:
+        st.markdown('<div class="section-label">Default Class</div>', unsafe_allow_html=True)
+        for label, val in [
+            ("Precision", f"{m['default_precision']:.1%}"),
+            ("Recall",    f"{m['default_recall']:.1%}"),
+            ("F1 Score",  f"{m['default_f1']:.1%}"),
+        ]:
+            st.markdown(f"""<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #0F1923;">
+                <span style="font-family:'DM Sans',sans-serif;font-size:0.82rem;color:#475569;">{label}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:0.82rem;color:#94A3B8;">{val}</span></div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    st.info("📄 Full interactive report: `reports/model_evaluation.html` — open in any browser.")
+    st.stop()
+
 
 # ============================================================
-# SIDEBAR
+# CREDIT ASSESSMENT — SIDEBAR INPUTS
 # ============================================================
 with st.sidebar:
-    st.markdown("""
-    <div style="padding:1.5rem 0.5rem 1rem 0.5rem; border-bottom:1px solid #1E2D40; margin-bottom:1rem;">
-        <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#F1F5F9;">🏦 CreditIQ</div>
-        <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#334155; margin-top:0.2rem;">SME UNDERWRITING ENGINE</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     st.markdown('<div class="section-label">▸ Business Profile</div>', unsafe_allow_html=True)
     business_age = st.number_input("Business Age (Years)", min_value=0, max_value=100, value=5)
     employees    = st.number_input("Number of Employees", min_value=1, max_value=500, value=10)
@@ -311,11 +442,11 @@ with st.sidebar:
     location     = st.selectbox("Location", list(LOCATION_MAP.keys()))
 
     st.markdown('<div class="section-label" style="margin-top:1.2rem;">▸ Financial Metrics</div>', unsafe_allow_html=True)
-    monthly_revenue       = st.number_input("Monthly Revenue (KES)",    min_value=0, max_value=10_000_000, value=150_000, step=5000)
-    monthly_expenses      = st.number_input("Monthly Expenses (KES)",   min_value=0, max_value=10_000_000, value=90_000,  step=5000)
+    monthly_revenue       = st.number_input("Monthly Revenue (KES)",  min_value=0, max_value=10_000_000, value=150_000, step=5000)
+    monthly_expenses      = st.number_input("Monthly Expenses (KES)", min_value=0, max_value=10_000_000, value=90_000,  step=5000)
     profit_margin         = st.slider("Profit Margin (%)", -50.0, 100.0, 20.0, step=0.5)
-    avg_account_balance   = st.number_input("Avg Bank Balance (KES)",   min_value=0, max_value=10_000_000, value=50_000,  step=1000)
-    transaction_frequency = st.number_input("Monthly Transactions",     min_value=0, max_value=200, value=15)
+    avg_account_balance   = st.number_input("Avg Bank Balance (KES)", min_value=0, max_value=10_000_000, value=50_000,  step=1000)
+    transaction_frequency = st.number_input("Monthly Transactions",   min_value=0, max_value=200, value=15)
 
     st.markdown('<div class="section-label" style="margin-top:1.2rem;">▸ Credit History</div>', unsafe_allow_html=True)
     loan_repayment_history = st.slider("Repayment History (0=Poor · 10=Excellent)", 0, 10, 7)
@@ -338,279 +469,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-
-# ============================================================
-# MAIN PANEL
-# ============================================================
-inputs = {
-    "business_age":           business_age,
-    "employees":              employees,
-    "sector":                 SECTOR_MAP[sector],
-    "location":               LOCATION_MAP[location],
-    "monthly_revenue":        monthly_revenue,
-    "monthly_expenses":       monthly_expenses,
-    "profit_margin":          profit_margin,
-    "avg_account_balance":    avg_account_balance,
-    "transaction_frequency":  transaction_frequency,
-    "loan_repayment_history": loan_repayment_history,
-    "existing_loans":         existing_loans,
-    "collateral_value":       collateral_value,
-}
-
-if not run_assessment:
-    col1, col2, col3 = st.columns(3)
-    cards = [
-        ("◈ ML Engine",      "#00D4AA", "RandomForest Classifier",
-         "Ensemble of 100 decision trees trained on Kenya-specific SME data with class-balanced sampling."),
-        ("◈ Risk Framework", "#0EA5E9", "Dual-Layer Scoring",
-         "ML prediction combined with rule-based scoring for robust, explainable credit decisions."),
-        ("◈ Coverage",       "#A855F7", "5 Counties · 5 Sectors",
-         "Nairobi, Mombasa, Kisumu, Nakuru, Eldoret across Retail, Agri, Manufacturing, Services & Tech."),
-    ]
-    for col, (label, color, title, desc) in zip([col1, col2, col3], cards):
-        with col:
-            st.markdown(f"""
-            <div style="background:#0D1117; border:1px solid #1E2D40; border-radius:12px; padding:1.5rem;">
-                <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:{color};
-                            text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.8rem;">{label}</div>
-                <div style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700;
-                            color:#F1F5F9; margin-bottom:0.5rem;">{title}</div>
-                <div style="font-family:'DM Sans',sans-serif; font-size:0.82rem; color:#475569; line-height:1.6;">{desc}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="margin-top:3rem; text-align:center; font-family:'DM Mono',monospace;
-                font-size:0.75rem; color:#1E3A5F; letter-spacing:0.1em;">
-        ← CONFIGURE SME PROFILE IN SIDEBAR AND CLICK RUN CREDIT ASSESSMENT
-    </div>
-    """, unsafe_allow_html=True)
-
-else:
-    input_df   = pd.DataFrame([inputs])
-    outliers   = detect_outliers(inputs)
-    rule_score, flags = compute_risk_score(inputs)
-    band, band_color  = risk_band(rule_score)
-    ref_id     = generate_ref_id(inputs)
-    timestamp  = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
-    cash_flow  = monthly_revenue - monthly_expenses
-    coverage_ratio = collateral_value / max(monthly_revenue * 6, 1)
-
-    ml_prediction    = model.predict(input_df)[0]
-    ml_proba         = model.predict_proba(input_df)[0] if hasattr(model, "predict_proba") else None
-    ml_default_prob  = float(ml_proba[1]) if ml_proba is not None else 0.5
-
-    hard_override = any(s == "CRITICAL" for s, _ in flags) and (
-        cash_flow < 0 or existing_loans > 9 or loan_repayment_history <= 2
-    )
-    final_default  = 1 if (ml_prediction == 1 or hard_override) else 0
-    blended_prob   = 0.7 * ml_default_prob + 0.3 * (rule_score / 100)
-
-    if outliers:
-        st.warning(f"⚠️ **{len(outliers)} input(s) outside training distribution — predictions may be less reliable.**\n\n" +
-                   "\n".join(f"- {o}" for o in outliers))
-
-    # Reference bar
-    st.markdown(f"""
-    <div style="display:flex; justify-content:space-between; font-family:'DM Mono',monospace;
-                font-size:0.65rem; color:#334155; border-bottom:1px solid #1E2D40;
-                padding-bottom:0.75rem; margin-bottom:1.5rem;">
-        <span>REF: <span style="color:#475569;">{ref_id}</span></span>
-        <span>ASSESSED: <span style="color:#475569;">{timestamp}</span></span>
-        <span>ENGINE: <span style="color:#475569;">CreditIQ v2.1</span></span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Verdict banner
-    if final_default == 1:
-        st.markdown(f"""
-        <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.04));
-                    border:1px solid rgba(239,68,68,0.4); border-left:4px solid #EF4444;
-                    border-radius:12px; padding:1.5rem 2rem; margin-bottom:1.5rem;
-                    display:flex; align-items:center; justify-content:space-between;">
-            <div>
-                <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#EF4444;
-                            text-transform:uppercase; letter-spacing:0.15em; margin-bottom:0.4rem;">◈ Credit Decision</div>
-                <div style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:#FCA5A5;">
-                    ✗ &nbsp;APPLICATION DECLINED</div>
-                <div style="font-family:'DM Sans',sans-serif; font-size:0.85rem; color:#7F1D1D; margin-top:0.3rem;">
-                    Risk profile exceeds acceptable underwriting threshold</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800; color:#EF4444; line-height:1;">
-                    {blended_prob:.0%}</div>
-                <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#7F1D1D; text-transform:uppercase;">
-                    Default Probability</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div style="background:linear-gradient(135deg,rgba(0,212,170,0.10),rgba(0,212,170,0.03));
-                    border:1px solid rgba(0,212,170,0.35); border-left:4px solid #00D4AA;
-                    border-radius:12px; padding:1.5rem 2rem; margin-bottom:1.5rem;
-                    display:flex; align-items:center; justify-content:space-between;">
-            <div>
-                <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#00D4AA;
-                            text-transform:uppercase; letter-spacing:0.15em; margin-bottom:0.4rem;">◈ Credit Decision</div>
-                <div style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:#6EE7B7;">
-                    ✓ &nbsp;APPLICATION APPROVED</div>
-                <div style="font-family:'DM Sans',sans-serif; font-size:0.85rem; color:#064E3B; margin-top:0.3rem;">
-                    Risk profile within acceptable underwriting parameters</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800; color:#00D4AA; line-height:1;">
-                    {blended_prob:.0%}</div>
-                <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#064E3B; text-transform:uppercase;">
-                    Default Probability</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # KPIs
-    k1, k2, k3, k4, k5 = st.columns(5)
-    with k1: st.metric("Risk Band",        band)
-    with k2: st.metric("Risk Score",       f"{rule_score:.0f} / 100")
-    with k3: st.metric("Monthly Cash Flow", format_kes(cash_flow), delta=f"{cash_flow/max(monthly_revenue,1)*100:.1f}% margin")
-    with k4: st.metric("Collateral Cover",  f"{coverage_ratio:.1f}×")
-    with k5: st.metric("Repayment Score",   f"{loan_repayment_history} / 10")
-
-    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
-
-    tab1, tab2, tab3 = st.tabs(["RISK BREAKDOWN", "FEATURE ANALYSIS", "AUDIT LOG"])
-
-    with tab1:
-        col_left, col_right = st.columns(2, gap="large")
-        with col_left:
-            st.markdown('<div class="section-label">Risk Flags</div>', unsafe_allow_html=True)
-            if flags:
-                sev_colors = {"CRITICAL": "#EF4444", "HIGH": "#F97316", "MEDIUM": "#EAB308"}
-                for severity, msg in sorted(flags, key=lambda x: ["CRITICAL","HIGH","MEDIUM"].index(x[0])):
-                    c = sev_colors[severity]
-                    st.markdown(f"""
-                    <div style="display:flex; align-items:flex-start; gap:0.75rem; margin-bottom:0.6rem;
-                                background:#0D1117; border:1px solid #1E2D40; border-left:3px solid {c};
-                                border-radius:8px; padding:0.7rem 1rem;">
-                        <span style="font-family:'DM Mono',monospace; font-size:0.6rem; font-weight:600;
-                                     color:{c}; text-transform:uppercase; white-space:nowrap;">{severity}</span>
-                        <span style="font-family:'DM Sans',sans-serif; font-size:0.82rem; color:#94A3B8;">{msg}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div style="background:#0D1117; border:1px solid #1E2D40; border-radius:8px;
-                            padding:1.5rem; text-align:center; color:#334155;
-                            font-family:'DM Mono',monospace; font-size:0.75rem;">NO RISK FLAGS DETECTED</div>
-                """, unsafe_allow_html=True)
-
-        with col_right:
-            st.markdown('<div class="section-label">Risk Score Composition</div>', unsafe_allow_html=True)
-            factor_scores = {
-                "Repayment History": max(0, (10 - loan_repayment_history) * 3),
-                "Existing Loans":    min(existing_loans * 2.5, 25),
-                "Cash Flow Health":  20 if cash_flow < 0 else (10 if cash_flow < monthly_revenue * 0.1 else 0),
-                "Profit Margin":     15 if profit_margin < 0 else (5 if profit_margin < 10 else 0),
-                "Account Balance":   15 if avg_account_balance < 2000 else (7 if avg_account_balance < 10000 else 0),
-                "Business Maturity": 8 if business_age < 2 else 0,
-            }
-            for factor, fscore in sorted(factor_scores.items(), key=lambda x: -x[1]):
-                pct   = fscore / 100
-                color = "#EF4444" if pct > 0.15 else ("#F97316" if pct > 0.07 else "#00D4AA")
-                st.markdown(f"""
-                <div style="margin-bottom:0.6rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
-                        <span style="font-family:'DM Sans',sans-serif; font-size:0.78rem; color:#94A3B8;">{factor}</span>
-                        <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:{color};">{fscore:.0f} pts</span>
-                    </div>
-                    <div style="background:#1E2D40; border-radius:3px; height:5px; overflow:hidden;">
-                        <div style="background:{color}; width:{min(pct*100*1.5,100):.0f}%; height:100%; border-radius:3px;"></div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            if ml_proba is not None:
-                st.markdown('<div class="section-label" style="margin-top:1.2rem;">ML Model Confidence</div>', unsafe_allow_html=True)
-                for cls, prob in zip(model.classes_, ml_proba):
-                    label = "Default" if str(cls) == "1" else "No Default"
-                    c     = "#EF4444" if str(cls) == "1" else "#00D4AA"
-                    st.markdown(f"""
-                    <div style="margin-bottom:0.5rem;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
-                            <span style="font-family:'DM Sans',sans-serif; font-size:0.78rem; color:#94A3B8;">{label}</span>
-                            <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:{c};">{prob:.1%}</span>
-                        </div>
-                        <div style="background:#1E2D40; border-radius:3px; height:5px; overflow:hidden;">
-                            <div style="background:{c}; width:{prob*100:.0f}%; height:100%; border-radius:3px;"></div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    with tab2:
-        fa1, fa2 = st.columns(2)
-        with fa1:
-            st.markdown('<div class="section-label">Financial Health</div>', unsafe_allow_html=True)
-            for label, val, sentiment in [
-                ("Monthly Revenue",  format_kes(monthly_revenue),  None),
-                ("Monthly Expenses", format_kes(monthly_expenses),  None),
-                ("Net Cash Flow",    format_kes(cash_flow),         "pos" if cash_flow >= 0 else "neg"),
-                ("Profit Margin",    f"{profit_margin:.1f}%",       "pos" if profit_margin >= 15 else "neg"),
-                ("Account Balance",  format_kes(avg_account_balance), None),
-                ("Collateral Value", format_kes(collateral_value),  None),
-                ("Collateral Cover", f"{coverage_ratio:.2f}×",      "pos" if coverage_ratio >= 1 else "neg"),
-            ]:
-                c = "#00D4AA" if sentiment == "pos" else ("#EF4444" if sentiment == "neg" else "#94A3B8")
-                st.markdown(f"""
-                <div style="display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid #0F1923;">
-                    <span style="font-family:'DM Sans',sans-serif; font-size:0.82rem; color:#475569;">{label}</span>
-                    <span style="font-family:'DM Mono',monospace; font-size:0.82rem; color:{c}; font-weight:500;">{val}</span>
-                </div>
-                """, unsafe_allow_html=True)
-        with fa2:
-            st.markdown('<div class="section-label">Business Profile</div>', unsafe_allow_html=True)
-            for label, val in [
-                ("Sector",                sector),
-                ("Location",              location),
-                ("Business Age",          f"{business_age} years"),
-                ("Employees",             str(employees)),
-                ("Transaction Frequency", f"{transaction_frequency}/month"),
-                ("Repayment History",     f"{loan_repayment_history}/10"),
-                ("Existing Loans",        str(existing_loans)),
-            ]:
-                st.markdown(f"""
-                <div style="display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid #0F1923;">
-                    <span style="font-family:'DM Sans',sans-serif; font-size:0.82rem; color:#475569;">{label}</span>
-                    <span style="font-family:'DM Mono',monospace; font-size:0.82rem; color:#94A3B8; font-weight:500;">{val}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-    with tab3:
-        st.markdown('<div class="section-label">Decision Audit Trail</div>', unsafe_allow_html=True)
-        for k, v in {
-            "reference_id":      ref_id,
-            "timestamp":         timestamp,
-            "model_version":     "RandomForestClassifier v2.1",
-            "ml_prediction":     int(ml_prediction),
-            "ml_default_prob":   f"{ml_default_prob:.4f}",
-            "rule_risk_score":   f"{rule_score:.1f}/100",
-            "blended_prob":      f"{blended_prob:.4f}",
-            "hard_override":     str(hard_override),
-            "final_decision":    "DECLINED" if final_default == 1 else "APPROVED",
-            "risk_band":         band,
-            "flags_count":       len(flags),
-            "outliers_detected": len(outliers),
-        }.items():
-            st.markdown(f"""
-            <div style="display:flex; gap:2rem; padding:0.45rem 0; border-bottom:1px solid #0F1923;">
-                <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:#334155;
-                             min-width:200px; text-transform:uppercase; letter-spacing:0.05em;">{k}</span>
-                <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:#64748B;">{v}</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="section-label">Raw Feature Vector</div>', unsafe_allow_html=True)
-        st.dataframe(input_df, use_container_width=True, hide_index=True)
-
 # ============================================================
 # FOOTER
 # ============================================================
@@ -625,3 +483,115 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+
+# ============================================================
+# MODEL PERFORMANCE PAGE (always visible via nav)
+# ============================================================
+def show_model_performance():
+    import json
+    metrics_path = Path("models") / "model_metrics.json"
+    if not metrics_path.exists():
+        st.warning("Run `python setup.py` to generate model metrics.")
+        return
+
+    with open(metrics_path) as f:
+        m = json.load(f)
+
+    st.markdown("""
+    <div style="padding:2.5rem 0 1.5rem 0; border-bottom:1px solid #1E2D40; margin-bottom:2rem;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.2em;
+                    text-transform:uppercase; color:#00D4AA; margin-bottom:0.4rem;">
+            ◈ CreditIQ Kenya · Model Evaluation
+        </div>
+        <div style="font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:#F1F5F9;">
+            Model Performance Report
+        </div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:0.9rem; color:#475569; margin-top:0.4rem;">
+            RandomForestClassifier · Kenya SME Credit Scoring · 2,000 samples · 5-fold CV
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # KPIs
+    k1,k2,k3,k4,k5,k6 = st.columns(6)
+    with k1: st.metric("Accuracy",         f"{m['accuracy']:.1%}")
+    with k2: st.metric("ROC AUC",          f"{m['roc_auc']:.4f}")
+    with k3: st.metric("CV F1 Score",      f"{m['cv_f1_mean']:.4f}")
+    with k4: st.metric("Default Recall",   f"{m['default_recall']:.1%}")
+    with k5: st.metric("Default Precision",f"{m['default_precision']:.1%}")
+    with k6: st.metric("Avg Precision",    f"{m['avg_precision']:.4f}")
+
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+
+    # ROC + PR charts using st.line_chart
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<div class="section-label">ROC Curve</div>', unsafe_allow_html=True)
+        roc_df = pd.DataFrame({"False Positive Rate": m["fpr"], "True Positive Rate": m["tpr"]})
+        st.line_chart(roc_df.set_index("False Positive Rate"), color="#00D4AA")
+        st.caption(f"AUC = {m['roc_auc']:.4f} — closer to 1.0 is better")
+
+    with col2:
+        st.markdown('<div class="section-label">Precision-Recall Curve</div>', unsafe_allow_html=True)
+        pr_df = pd.DataFrame({"Recall": m["recall_curve"], "Precision": m["precision_curve"]})
+        st.line_chart(pr_df.set_index("Recall"), color="#0EA5E9")
+        st.caption(f"Average Precision = {m['avg_precision']:.4f}")
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown('<div class="section-label">Confusion Matrix</div>', unsafe_allow_html=True)
+        cm = m["confusion_matrix"]
+        c1,c2 = st.columns(2)
+        with c1:
+            st.markdown(f"""
+            <div style="background:rgba(0,212,170,0.12); border:1px solid rgba(0,212,170,0.3);
+                        border-radius:10px; padding:1.2rem; text-align:center; margin-bottom:0.5rem;">
+                <div style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:#00D4AA;">{cm[0][0]}</div>
+                <div style="font-family:'DM Mono',monospace; font-size:0.6rem; color:#00D4AA; text-transform:uppercase;">True Negative</div>
+            </div>
+            <div style="background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.2);
+                        border-radius:10px; padding:1.2rem; text-align:center;">
+                <div style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:#F97316;">{cm[1][0]}</div>
+                <div style="font-family:'DM Mono',monospace; font-size:0.6rem; color:#F97316; text-transform:uppercase;">False Negative</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with c2:
+            st.markdown(f"""
+            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2);
+                        border-radius:10px; padding:1.2rem; text-align:center; margin-bottom:0.5rem;">
+                <div style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:#EF4444;">{cm[0][1]}</div>
+                <div style="font-family:'DM Mono',monospace; font-size:0.6rem; color:#EF4444; text-transform:uppercase;">False Positive</div>
+            </div>
+            <div style="background:rgba(0,212,170,0.12); border:1px solid rgba(0,212,170,0.3);
+                        border-radius:10px; padding:1.2rem; text-align:center;">
+                <div style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:#00D4AA;">{cm[1][1]}</div>
+                <div style="font-family:'DM Mono',monospace; font-size:0.6rem; color:#00D4AA; text-transform:uppercase;">True Positive</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown('<div class="section-label">Feature Importance</div>', unsafe_allow_html=True)
+        colors = ["#00D4AA","#0EA5E9","#A855F7","#F97316","#EAB308","#EF4444",
+                  "#22C55E","#64748B","#EC4899","#14B8A6","#8B5CF6","#F59E0B"]
+        for i, (feat, imp) in enumerate(m["feature_importance"].items()):
+            pct = imp * 100
+            c   = colors[i % len(colors)]
+            st.markdown(f"""
+            <div style="margin-bottom:0.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
+                    <span style="font-family:'DM Sans',sans-serif; font-size:0.78rem; color:#94A3B8;">
+                        {feat.replace('_',' ').title()}</span>
+                    <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:{c};">{pct:.1f}%</span>
+                </div>
+                <div style="background:#1E2D40; border-radius:3px; height:5px; overflow:hidden;">
+                    <div style="background:{c}; width:{min(pct*5,100):.0f}%; height:100%; border-radius:3px;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Link to full HTML report
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    st.info("📄 Full HTML report available at `reports/model_evaluation.html` — open it in any browser for the complete interactive evaluation.")
