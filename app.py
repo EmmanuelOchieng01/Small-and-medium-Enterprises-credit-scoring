@@ -30,61 +30,72 @@ st.title("💼 Kenya SME Credit Scoring Dashboard")
 st.write("Predict credit risk for small and medium enterprises in Kenya.")
 
 # ----------------------------
-# Sidebar: user inputs
+# Sidebar: user inputs (matched to actual CSV columns)
 # ----------------------------
 st.sidebar.header("Enter SME Information")
 
-# Map friendly labels to feature column names
-friendly_labels = {
-    "revenue": "Annual Revenue (KES)",
-    "annual_revenue": "Annual Revenue (KES)",
-    "employees": "Number of Employees",
-    "num_employees": "Number of Employees",
-    "loan_amount": "Requested Loan Amount (KES)",
-    "years_operating": "Years in Operation",
-    "years_in_business": "Years in Operation",
-    "age": "Business Age (Years)",
-}
+business_age           = st.sidebar.number_input("Business Age (Years)", min_value=0, value=3)
+employees              = st.sidebar.number_input("Number of Employees", min_value=1, value=5)
+sector                 = st.sidebar.selectbox("Sector", ["Retail", "Manufacturing", "Agriculture", "Services", "Technology", "Other"])
+location               = st.sidebar.selectbox("Location", ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Other"])
+monthly_revenue        = st.sidebar.number_input("Monthly Revenue (KES)", min_value=0, value=50000)
+monthly_expenses       = st.sidebar.number_input("Monthly Expenses (KES)", min_value=0, value=30000)
+profit_margin          = st.sidebar.slider("Profit Margin (%)", 0.0, 100.0, 20.0)
+avg_account_balance    = st.sidebar.number_input("Avg Bank Account Balance (KES)", min_value=0, value=20000)
+transaction_frequency  = st.sidebar.number_input("Monthly Transaction Frequency", min_value=0, value=10)
+loan_repayment_history = st.sidebar.slider("Loan Repayment History Score (0-10)", 0, 10, 5)
+existing_loans         = st.sidebar.number_input("Number of Existing Loans", min_value=0, value=1)
+collateral_value       = st.sidebar.number_input("Collateral Value (KES)", min_value=0, value=100000)
 
-user_inputs = {}
-for col in feature_cols:
-    label = friendly_labels.get(col, col.replace("_", " ").title())
-    user_inputs[col] = st.sidebar.number_input(label, min_value=0, value=0)
+# ----------------------------
+# Encode categoricals the same way training did
+# ----------------------------
+from sklearn.preprocessing import LabelEncoder
+
+sector_map   = {"Retail": 0, "Manufacturing": 1, "Agriculture": 2, "Services": 3, "Technology": 4, "Other": 5}
+location_map = {"Nairobi": 0, "Mombasa": 1, "Kisumu": 2, "Nakuru": 3, "Eldoret": 4, "Other": 5}
 
 # ----------------------------
 # Prediction
 # ----------------------------
-if st.sidebar.button("Predict Credit Score"):
-    input_data = pd.DataFrame([user_inputs])
+if st.sidebar.button("Predict Credit Risk"):
+    input_data = pd.DataFrame([{
+        "business_age":           business_age,
+        "employees":              employees,
+        "sector":                 sector_map.get(sector, 5),
+        "location":               location_map.get(location, 5),
+        "monthly_revenue":        monthly_revenue,
+        "monthly_expenses":       monthly_expenses,
+        "profit_margin":          profit_margin,
+        "avg_account_balance":    avg_account_balance,
+        "transaction_frequency":  transaction_frequency,
+        "loan_repayment_history": loan_repayment_history,
+        "existing_loans":         existing_loans,
+        "collateral_value":       collateral_value,
+    }])
 
     prediction = model.predict(input_data)[0]
     proba = model.predict_proba(input_data)[0] if hasattr(model, "predict_proba") else None
 
-    st.subheader("Credit Score Result")
+    st.subheader("Credit Risk Result")
 
-    try:
-        score = float(prediction)
-        st.markdown(
-            f"<h2 style='color:#1f77b4;'>Predicted Score: {score:.2f}</h2>",
-            unsafe_allow_html=True
-        )
-        if score >= 80:
-            st.success("Excellent credit risk ✅")
-        elif score >= 50:
-            st.warning("Moderate credit risk ⚠️")
-        else:
-            st.error("High credit risk ❌")
-    except (ValueError, TypeError):
-        st.markdown(
-            f"<h2 style='color:#1f77b4;'>Prediction: {prediction}</h2>",
-            unsafe_allow_html=True
-        )
+    if prediction == 1 or str(prediction).lower() in ["default", "high", "yes", "1"]:
+        st.error("⚠️ High Credit Risk — Likely to Default")
+    else:
+        st.success("✅ Low Credit Risk — Creditworthy")
+
+    st.markdown(f"**Raw Prediction:** `{prediction}`")
 
     if proba is not None:
-        st.write("**Prediction confidence:**")
+        st.write("**Prediction Confidence:**")
         classes = model.classes_
         for cls, prob in zip(classes, proba):
-            st.write(f"- Class `{cls}`: {prob:.1%}")
+            label = "Default" if str(cls) in ["1", "yes", "default"] else "No Default"
+            st.progress(float(prob), text=f"{label}: {prob:.1%}")
+
+    # Show input summary
+    with st.expander("📋 Input Summary"):
+        st.dataframe(input_data)
 
 # ----------------------------
 # Footer
