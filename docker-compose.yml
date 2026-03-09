@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  creditiq:
+    build: .
+    container_name: creditiq-kenya
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: unless-stopped

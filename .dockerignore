@@ -1,0 +1,10 @@
+models/*.pkl
+models/*.joblib
+__pycache__/
+*.py[cod]
+.env
+venv/
+.git/
+.ipynb_checkpoints/
+*.ipynb
+.DS_Store
