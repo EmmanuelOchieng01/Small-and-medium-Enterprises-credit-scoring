@@ -154,6 +154,13 @@ with st.sidebar:
 
     st.markdown("<hr style='border-color:#1E2D40; margin:0.5rem 0 1rem 0;'>", unsafe_allow_html=True)
 
+    run_assessment = False
+    business_age = employees = monthly_revenue = monthly_expenses = 0
+    profit_margin = avg_account_balance = transaction_frequency = 0.0
+    loan_repayment_history = existing_loans = collateral_value = 0
+    sector = list(SECTOR_MAP.keys())[0]
+    location = list(LOCATION_MAP.keys())[0]
+
     if page == "📋 Credit Assessment":
         st.markdown('<div class="section-label">▸ Business Profile</div>', unsafe_allow_html=True)
         business_age = st.number_input("Business Age (Years)", min_value=0, max_value=100, value=5)
