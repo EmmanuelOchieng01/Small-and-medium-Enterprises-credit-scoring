@@ -2,38 +2,20 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 import joblib
-import numpy as np
 
 # ----------------------------
-# Load the model
+# Load model + feature columns
 # ----------------------------
 model_path = Path("models") / "kenya_sme_credit_model.pkl"
+features_path = Path("models") / "feature_columns.pkl"
 
 @st.cache_resource
-def load_model(path):
-    try:
-        return joblib.load(path)
-    except ModuleNotFoundError:
-        # Fallback: numpy version mismatch (numpy._core vs numpy.core)
-        # Re-save the model with the current numpy version to fix permanently
-        import pickle
-        import importlib, sys
+def load_model():
+    model = joblib.load(model_path)
+    feature_cols = joblib.load(features_path)
+    return model, feature_cols
 
-        # Patch missing numpy._core to point to numpy.core
-        if "numpy._core" not in sys.modules:
-            import numpy.core as _np_core
-            sys.modules["numpy._core"] = _np_core
-            sys.modules["numpy._core.multiarray"] = _np_core.multiarray
-
-        with open(path, "rb") as f:
-            model = pickle.load(f)
-
-        # Re-save with current numpy so next load works normally
-        joblib.dump(model, path)
-        st.toast("✅ Model re-saved for your numpy version. Restart the app once.", icon="🔧")
-        return model
-
-model = load_model(model_path)
+model, feature_cols = load_model()
 
 # ----------------------------
 # Page configuration
@@ -52,36 +34,57 @@ st.write("Predict credit risk for small and medium enterprises in Kenya.")
 # ----------------------------
 st.sidebar.header("Enter SME Information")
 
-revenue = st.sidebar.number_input("Annual Revenue (KES)", min_value=0, value=100000)
-employees = st.sidebar.number_input("Number of Employees", min_value=1, value=5)
-loan_amount = st.sidebar.number_input("Requested Loan Amount (KES)", min_value=0, value=50000)
-years_operating = st.sidebar.slider("Years in Operation", 0, 50, 3)
+# Map friendly labels to feature column names
+friendly_labels = {
+    "revenue": "Annual Revenue (KES)",
+    "annual_revenue": "Annual Revenue (KES)",
+    "employees": "Number of Employees",
+    "num_employees": "Number of Employees",
+    "loan_amount": "Requested Loan Amount (KES)",
+    "years_operating": "Years in Operation",
+    "years_in_business": "Years in Operation",
+    "age": "Business Age (Years)",
+}
+
+user_inputs = {}
+for col in feature_cols:
+    label = friendly_labels.get(col, col.replace("_", " ").title())
+    user_inputs[col] = st.sidebar.number_input(label, min_value=0, value=0)
 
 # ----------------------------
 # Prediction
 # ----------------------------
 if st.sidebar.button("Predict Credit Score"):
-    input_data = pd.DataFrame({
-        "revenue": [revenue],
-        "employees": [employees],
-        "loan_amount": [loan_amount],
-        "years_operating": [years_operating],
-    })
+    input_data = pd.DataFrame([user_inputs])
 
-    score = model.predict(input_data)[0]
+    prediction = model.predict(input_data)[0]
+    proba = model.predict_proba(input_data)[0] if hasattr(model, "predict_proba") else None
 
     st.subheader("Credit Score Result")
-    st.markdown(
-        f"<h2 style='color:#1f77b4;'>Predicted Credit Score: {score:.2f}</h2>",
-        unsafe_allow_html=True
-    )
 
-    if score >= 80:
-        st.success("Excellent credit risk ✅")
-    elif score >= 50:
-        st.warning("Moderate credit risk ⚠️")
-    else:
-        st.error("High credit risk ❌")
+    try:
+        score = float(prediction)
+        st.markdown(
+            f"<h2 style='color:#1f77b4;'>Predicted Score: {score:.2f}</h2>",
+            unsafe_allow_html=True
+        )
+        if score >= 80:
+            st.success("Excellent credit risk ✅")
+        elif score >= 50:
+            st.warning("Moderate credit risk ⚠️")
+        else:
+            st.error("High credit risk ❌")
+    except (ValueError, TypeError):
+        st.markdown(
+            f"<h2 style='color:#1f77b4;'>Prediction: {prediction}</h2>",
+            unsafe_allow_html=True
+        )
+
+    if proba is not None:
+        st.write("**Prediction confidence:**")
+        classes = model.classes_
+        for cls, prob in zip(classes, proba):
+            st.write(f"- Class `{cls}`: {prob:.1%}")
 
 # ----------------------------
 # Footer
