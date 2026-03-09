@@ -1,172 +1,158 @@
-# Kenya Small and Medium Enterprises Credit Scoring Model
+# CreditIQ Kenya — SME Credit Risk Intelligence Platform
 
-## Problem Definition
- 
-Most Kenyan Small and Medium Enterprises (SMEs) struggle to access credit because lenders rely on collateral-based assessments and lack reliable data-driven tools to evaluate business risk. As a result, many viable businesses are denied funding, while lenders face uncertainty in loan decisions.
-
-This project solves that problem by building a machine learning–based credit scoring model that predicts SME creditworthiness using real financial and transactional data. It introduces explainable AI to ensure transparency and trust in every lending decision.
-
-
-##  Objectives
-- Build predictive models for SME credit risk assessment
-- Implement explainable AI for transparent decision-making
-- Create deployable API and dashboard for lenders
-
-## Dataset
-- Simulated Kenyan SME transaction data
-- 1,000 SME records across various sectors and locations
-- Features include financial metrics, business characteristics, and banking behavior
-
-## Best Model
-- **Model**: Random Forest
-- **AUC Score**: 1.0000
-- **Accuracy**: 0.9900
-1. Clone the repository
-
-git clone https://github.com/EmmanuelOchieng01/Small-and-medium-Enterprises-credit-scoring.git
-
-then; 
-
-cd Small-and-medium-Enterprises-credit-scoring
-
-2. Install dependencies
-
-pip install -r requirements.txt
-
-3. Run the credit scoring model
-
-python kenya_sme_credit.py
-
-4. Run the dashboard
-
-streamlit run app.py
-
-after running the dashboard open:
-
-http://localhost:8501
-
-
-##structure 
-kenya-sme-credit/
-├── models/            # Saved ML models
-├── data/              # Dataset files
-├── reports/           # Model performance reports
-├── notebooks/         # Jupyter notebooks for experiments
-├── kenya_sme_credit.py # Main ML model script
-├── app.py             # Streamlit dashboard
-└── requirements.txt   # Project dependencies
-
-
-## Key Features
-- Multiple ML models (Random Forest, Gradient Boosting, Logistic Regression)
-- SHAP explainability for model interpretability
-- Bias and fairness analysis
-- API deployment ready
-- Interactive dashboard
-
-##  Contributors
-Emmanuel Ochieng
-
-
-
-
-# 🏦 CreditIQ Kenya — SME Credit Scoring System
-
-ML-powered credit risk assessment platform for Kenya's small and medium enterprise sector.
+ML-powered credit underwriting for Kenya's small and medium enterprise sector.
+Built with RandomForest, dual-layer risk scoring, and a Streamlit dashboard.
 
 ---
 
-## ⚡ Quickstart (any machine, any numpy version)
+## Overview
+
+CreditIQ Kenya is an end-to-end credit scoring system designed for Kenyan SMEs. It combines a machine learning model with a rule-based financial risk engine to produce explainable, auditable credit decisions — the kind used in real microfinance and banking workflows.
+
+**Key capabilities**
+
+- Predicts credit default probability for SMEs across 5 Kenyan counties and 5 sectors
+- Dual-layer scoring: 70% ML probability + 30% rule-based financial score
+- Hard override logic for extreme risk cases — negative cash flow, excessive loans, poor repayment history
+- Full audit trail with unique reference ID per assessment
+- Model performance dashboard: ROC curve, Precision-Recall, Confusion Matrix, Feature Importance
+
+---
+
+## Model Details
+
+| Property | Value |
+|---|---|
+| Algorithm | RandomForestClassifier (100 trees) |
+| Training data | 2,000 synthetic Kenya SME records |
+| Class balance | 70% no default / 30% default |
+| Validation | 5-fold cross-validation + stratified 80/20 split |
+| Accuracy | ~91.5% |
+| Default Recall | ~86% |
+| ROC AUC | ~0.96 |
+
+**Features used**
+
+`business_age` · `employees` · `sector` · `location` · `monthly_revenue` · `monthly_expenses` · `profit_margin` · `avg_account_balance` · `transaction_frequency` · `loan_repayment_history` · `existing_loans` · `collateral_value`
+
+---
+
+## Launch Procedure
+
+### Option A — Run Locally
+
+Requirements: Python 3.10+
 
 ```bash
-# 1. Clone the repo
 git clone https://github.com/EmmanuelOchieng01/Small-and-medium-Enterprises-credit-scoring
 cd Small-and-medium-Enterprises-credit-scoring
-
-# 2. Install dependencies
 pip install -r requirements.txt
-
-# 3. Train the model (only needed once)
 python setup.py
-
-# 4. Launch the app
 streamlit run app.py
 ```
 
-> **Note:** `setup.py` trains the model fresh on your machine — this ensures full compatibility with your local numpy/scikit-learn versions. The app also auto-trains on first launch if no model is found.
+Open your browser at http://localhost:8501
 
 ---
 
-## 🏗️ Architecture
+### Option B — Docker
 
-### Dual-Layer Risk Engine
-| Layer | Method | Weight |
-|---|---|---|
-| ML Model | RandomForestClassifier (100 trees, class-balanced) | 70% |
-| Rules Engine | Financial logic scoring (0–100) | 30% |
-| Hard Override | Extreme case detection | Overrides both |
+Requirements: Docker and Docker Compose
 
-### Features Used (12 indicators)
-| Feature | Description |
-|---|---|
-| `business_age` | Years in operation |
-| `employees` | Headcount |
-| `sector` | Industry (Retail / Manufacturing / Agriculture / Services / Tech) |
-| `location` | County (Nairobi / Mombasa / Kisumu / Nakuru / Eldoret) |
-| `monthly_revenue` | Gross monthly revenue (KES) |
-| `monthly_expenses` | Total monthly expenses (KES) |
-| `profit_margin` | Net profit margin (%) |
-| `avg_account_balance` | Average bank balance (KES) |
-| `transaction_frequency` | Monthly banking transactions |
-| `loan_repayment_history` | Score 0–10 (10 = perfect) |
-| `existing_loans` | Number of active loans |
-| `collateral_value` | Value of pledged assets (KES) |
+```bash
+git clone https://github.com/EmmanuelOchieng01/Small-and-medium-Enterprises-credit-scoring
+cd Small-and-medium-Enterprises-credit-scoring
+docker compose up --build
+```
+
+Open your browser at http://localhost:8501
+
+To stop: `docker compose down`
 
 ---
 
-## 🛡️ Risk Framework
-
-**CRITICAL** — Immediate decline triggers:
-- Loan repayment history ≤ 2/10
-- Existing loans > 9
-- Negative monthly cash flow
-
-**HIGH** — Significant risk factors:
-- Below-average repayment history
-- Negative profit margin
-- Critically low account balance
-
-**MEDIUM** — Monitored risk factors:
-- Thin cash flow margin
-- Insufficient collateral coverage
-- Early-stage business (< 2 years)
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-├── app.py                  # Streamlit app (self-healing)
-├── setup.py                # One-time model training script
-├── generate_data.py        # Synthetic dataset generator
-├── requirements.txt        # Unpinned dependencies (version-agnostic)
-├── data/
-│   └── kenya_sme_dataset.csv
-├── models/                 # Auto-generated (not committed to git)
+├── app.py                  # Streamlit dashboard
+├── setup.py                # Generates dataset, trains model, saves metrics
+├── generate_data.py        # Synthetic Kenya SME dataset generator
+├── requirements.txt        # Python dependencies
+├── Dockerfile
+├── docker-compose.yml
+├── models/                 # Auto-generated by setup.py — not in git
 │   ├── kenya_sme_credit_model.pkl
-│   └── feature_columns.pkl
+│   ├── feature_columns.pkl
+│   └── model_metrics.json
+├── data/                   # Auto-generated by setup.py — not in git
+│   └── kenya_sme_dataset.csv
 └── reports/
+    └── model_evaluation.html
 ```
 
 ---
 
-## 🔬 Model Performance
+## How It Works
 
-Trained on 2,000 synthetic Kenya SME records with realistic default logic (~30% default rate). Evaluated with stratified k-fold cross-validation.
+**1. Data Generation**
+
+Generates 2,000 realistic SME records using Kenya-specific financial logic. Revenue, expenses, and balance distributions are calibrated to Kenyan SME ranges. Default labels are assigned based on weighted risk factors and the dataset is class-balanced to a ~30% default rate.
+
+**2. Model Training**
+
+Trains a RandomForestClassifier with 100 estimators on an 80/20 stratified split. Saves the model, feature columns, and full evaluation metrics. Generates a standalone HTML report in `reports/`.
+
+**3. Risk Engine**
+
+Each assessment runs two layers simultaneously.
+
+- **ML Layer (70% weight)** — RandomForest predicts default probability from 12 features
+- **Rule Layer (30% weight)** — Scores 0–100 based on repayment history, cash flow, loan count, balance, and business maturity. Flags CRITICAL / HIGH / MEDIUM conditions
+- **Hard Override** — If CRITICAL flags exist alongside extreme conditions (negative cash flow, more than 9 loans, or repayment score of 2 or below), the application is declined regardless of ML output
 
 ---
 
-*Built by Emmanuel Ochieng · Kenya SME Credit Scoring System*
+## Sample Test Cases
 
-##  License
-MIT License
+**Expected approval — Healthy Nairobi Tech SME**
+
+```
+Business Age: 8 yrs      Employees: 25         Sector: Technology    Location: Nairobi
+Monthly Revenue: 300,000  Expenses: 180,000     Profit Margin: 35%
+Bank Balance: 120,000     Transactions: 30/mo
+Repayment Score: 9/10     Existing Loans: 1     Collateral: 400,000
+```
+
+Result: Approved · Low risk · Default probability 10–20% · No flags
+
+---
+
+**Expected decline — High-Risk Kisumu Retail SME**
+
+```
+Business Age: 1 yr        Employees: 3          Sector: Retail        Location: Kisumu
+Monthly Revenue: 50,000   Expenses: 65,000      Profit Margin: -15%
+Bank Balance: 1,500       Transactions: 5/mo
+Repayment Score: 2/10     Existing Loans: 11    Collateral: 10,000
+```
+
+Result: Declined · Critical risk · Hard override triggered · Default probability 80–95% · 4–5 flags
+
+---
+
+## Coverage
+
+**Counties:** Nairobi, Mombasa, Kisumu, Nakuru, Eldoret
+
+**Sectors:** Retail, Manufacturing, Agriculture, Services, Technology
+
+---
+
+## Author
+
+**Emmanuel Ochieng**
+GitHub: https://github.com/EmmanuelOchieng01
+
+---
+
+*For educational and demonstration purposes. Not a substitute for full credit due diligence.*
