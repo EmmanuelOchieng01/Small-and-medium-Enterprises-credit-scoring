@@ -2,12 +2,38 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 import joblib
+import numpy as np
 
 # ----------------------------
 # Load the model
 # ----------------------------
 model_path = Path("models") / "kenya_sme_credit_model.pkl"
-model = joblib.load(model_path)
+
+@st.cache_resource
+def load_model(path):
+    try:
+        return joblib.load(path)
+    except ModuleNotFoundError:
+        # Fallback: numpy version mismatch (numpy._core vs numpy.core)
+        # Re-save the model with the current numpy version to fix permanently
+        import pickle
+        import importlib, sys
+
+        # Patch missing numpy._core to point to numpy.core
+        if "numpy._core" not in sys.modules:
+            import numpy.core as _np_core
+            sys.modules["numpy._core"] = _np_core
+            sys.modules["numpy._core.multiarray"] = _np_core.multiarray
+
+        with open(path, "rb") as f:
+            model = pickle.load(f)
+
+        # Re-save with current numpy so next load works normally
+        joblib.dump(model, path)
+        st.toast("✅ Model re-saved for your numpy version. Restart the app once.", icon="🔧")
+        return model
+
+model = load_model(model_path)
 
 # ----------------------------
 # Page configuration
@@ -35,7 +61,6 @@ years_operating = st.sidebar.slider("Years in Operation", 0, 50, 3)
 # Prediction
 # ----------------------------
 if st.sidebar.button("Predict Credit Score"):
-    # Prepare input dataframe
     input_data = pd.DataFrame({
         "revenue": [revenue],
         "employees": [employees],
@@ -43,10 +68,8 @@ if st.sidebar.button("Predict Credit Score"):
         "years_operating": [years_operating],
     })
 
-    # Predict
     score = model.predict(input_data)[0]
 
-    # Display results
     st.subheader("Credit Score Result")
     st.markdown(
         f"<h2 style='color:#1f77b4;'>Predicted Credit Score: {score:.2f}</h2>",
