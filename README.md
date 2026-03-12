@@ -65,7 +65,7 @@ cd Small-and-medium-Enterprises-credit-scoring
 docker compose up --build
 ```
 
-#First build takes 5–15 minutes depending on your connection. Subsequent starts take under 30 seconds.
+-First build takes 5–15 minutes depending on your connection. Subsequent starts take under 30 seconds.
 
 Open your browser at http://localhost:8501
 
