@@ -37,6 +37,20 @@ CreditIQ Kenya is an end-to-end credit scoring system designed for Kenyan SMEs. 
 
 ---
 
+## Screenshots
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-14-34" src="https://github.com/user-attachments/assets/1682c643-6f28-4e5d-a6da-42fe3c13e213" />
+
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-16-04" src="https://github.com/user-attachments/assets/cdb120cd-08f5-45cb-9ae5-d99224b69eb4" />
+
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-16-43" src="https://github.com/user-attachments/assets/015b292a-bb71-4ae7-9501-05b08b99f56a" />
+
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-18-17" src="https://github.com/user-attachments/assets/4899c388-5874-45a1-8ad5-d040d30124e4" />
+
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-18-38" src="https://github.com/user-attachments/assets/c332655b-0496-4ae9-bdd4-df93f75178bd" />
+
+
+<img width="1600" height="900" alt="Screenshot From 2026-03-24 12-27-22" src="https://github.com/user-attachments/assets/f5579e4e-ce47-4514-b182-c20a966efe19" />
+
 ## Launch Procedure
 
 ### Option A — Run Locally
